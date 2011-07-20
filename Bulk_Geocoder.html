@@ -1,0 +1,77 @@
+<html>
+<head>
+<!--
+Google Geocoding API is subject to a query limit of 2,500 geolocation requests per day
+-->
+<title>Simon Geocoding</title>
+</head>
+<body>
+
+<form>
+	<h2>Bulk Geocoder</h2>
+	<i>Important: the coordinates returned from this tool are only to be used in conjuction with Google Maps</i><br>
+	Enter list of addresses on separate lines:
+	<br>
+	<textarea cols=40 rows=8></textarea>
+	<br>Note: you have a limit of 2,500 geocoding requests per day (per IP address)<br>
+	<input type="submit" value="Go and Geocode!">
+	<input type="reset">
+	
+
+
+<div id="resultBox">
+	<textarea cols=80 rows=12></textarea><textarea cols=40 rows=12></textarea>
+</div>
+</form>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js" type="text/javascript"></script>
+ <script src="http://maps.google.com/maps/api/js?&amp;sensor=false&amp;key=ABQIAAAAnclR83ppqH3dsaTFAo-k7BT42jgS1xfaYFXGX_QlHDCtV0nt4xRzFloTa-gTb46aT_E2aF9vsWjopg" type="text/javascript"></script>
+    
+<script type="text/javascript">
+
+	var t = $('#resultBox textarea')[0];
+	var e = $('#resultBox textarea')[1];
+	//var maxConcurrentRequests = 1;
+	var delayTime = 620;
+	g = new google.maps.Geocoder();
+
+	$('form').submit(function(e) {
+		e.preventDefault();
+		
+		// store list into an array queue
+		queue = $('textarea').val().trim().split('\n');
+		finalResults = queue.slice(0);	// create a copy of our array
+		nextRequestInQueue();
+	});
+	
+	function nextRequestInQueue() {
+		
+		if (queue.length) {
+		
+			var item = queue.shift();
+			console.log('Now requesting ' + item);
+			
+			g.geocode( { 'address': item, 'region': 'au'}, function (results, status) {
+				  if (status == google.maps.GeocoderStatus.OK) {
+					console.log('Result for ' + item);
+					console.log(results);
+					// Append result to second textarea
+					finalResults[finalResults.indexOf(item)] = results[0].geometry.location.lng() + '\t' 
+								+ results[0].geometry.location.lat() + '\t' + item;
+					t.value = finalResults.join('\n');
+				  } else {
+					console.warn("Geocode was not successful for the following reason: " + status + ' > ' + item);
+					if (status == "xxx") delayTime *= 1.08;
+					queue.push(item);
+					e.value += item + '\n';
+				  }
+			  setTimeout(nextRequestInQueue, delayTime);
+			});
+			
+		}
+	}
+	
+
+</script>
+</body>
+</html>
