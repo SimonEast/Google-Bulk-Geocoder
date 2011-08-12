@@ -33,7 +33,7 @@ Note: Google Geocoding API is subject to a query limit of 2,500 geolocation requ
 	<i>Important: the coordinates returned from this tool are only to be used in conjuction with Google Maps</i><br>
 	Enter list of addresses on separate lines:
 	<br>
-	<textarea cols=40 rows=8></textarea>
+	<textarea cols=80 rows=12></textarea>
 	<br>Note: you have a limit of 2,500 geocoding requests per day (per IP address)<br>
 	<input type="submit" value="Go and Geocode!">
 	<input type="button" value="Stop!" id="stopBtn"/>
@@ -78,7 +78,7 @@ Note: Google Geocoding API is subject to a query limit of 2,500 geolocation requ
 			console.log('Now requesting ' + item);
 			
 			g.geocode( { 'address': item, 'region': 'au'}, function (results, status) {
-				txtCount.val(txtCount.val()+1)
+				  txtCount.val(txtCount.val() - (-1))				// negative forces numerical addition
 				  if (status == google.maps.GeocoderStatus.OK) {
 					//console.log('Result for ' + item);
 					//console.log(results);
