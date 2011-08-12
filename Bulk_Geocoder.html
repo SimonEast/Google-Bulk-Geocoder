@@ -1,9 +1,30 @@
 <html>
 <head>
 <!--
-Google Geocoding API is subject to a query limit of 2,500 geolocation requests per day
+
+Code by Simon East
+Version 2.0
+http://code.google.com/p/google-bulk-geocoder/
+Copyright 2011
+
+ 	This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Note: Google Geocoding API is subject to a query limit of 2,500 geolocation requests per day
+
 -->
-<title>Simon Geocoding</title>
+<title>Bulk Geocoding Tool, using Google Maps Api v3</title>
 </head>
 <body>
 
@@ -15,6 +36,7 @@ Google Geocoding API is subject to a query limit of 2,500 geolocation requests p
 	<textarea cols=40 rows=8></textarea>
 	<br>Note: you have a limit of 2,500 geocoding requests per day (per IP address)<br>
 	<input type="submit" value="Go and Geocode!">
+	<input type="button" value="Stop!" id="stopBtn"/>
 	<input type="reset">
 	
 
@@ -22,6 +44,7 @@ Google Geocoding API is subject to a query limit of 2,500 geolocation requests p
 <div id="resultBox">
 	<textarea cols=80 rows=12></textarea><textarea cols=40 rows=12></textarea>
 </div>
+<input type="text" size="5" id="txtCount" value="0"/>
 </form>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js" type="text/javascript"></script>
@@ -31,18 +54,21 @@ Google Geocoding API is subject to a query limit of 2,500 geolocation requests p
 
 	var t = $('#resultBox textarea')[0];
 	var e = $('#resultBox textarea')[1];
+	var txtCount = $('#txtCount');
 	//var maxConcurrentRequests = 1;
 	var delayTime = 620;
 	g = new google.maps.Geocoder();
 
 	$('form').submit(function(e) {
 		e.preventDefault();
-		
+		stop = false;
 		// store list into an array queue
 		queue = $('textarea').val().trim().split('\n');
 		finalResults = queue.slice(0);	// create a copy of our array
 		nextRequestInQueue();
 	});
+	
+	$('#stopBtn').click(function(){ stop = TRUE })
 	
 	function nextRequestInQueue() {
 		
@@ -52,20 +78,24 @@ Google Geocoding API is subject to a query limit of 2,500 geolocation requests p
 			console.log('Now requesting ' + item);
 			
 			g.geocode( { 'address': item, 'region': 'au'}, function (results, status) {
+				txtCount.val(txtCount.val()+1)
 				  if (status == google.maps.GeocoderStatus.OK) {
-					console.log('Result for ' + item);
-					console.log(results);
+					//console.log('Result for ' + item);
+					//console.log(results);
 					// Append result to second textarea
-					finalResults[finalResults.indexOf(item)] = results[0].geometry.location.lng() + '\t' 
-								+ results[0].geometry.location.lat() + '\t' + item;
+					finalResults[finalResults.indexOf(item)] = item + '\t' + results[0].geometry.location.lng() + '\t' 
+								+ results[0].geometry.location.lat();
 					t.value = finalResults.join('\n');
 				  } else {
-					console.warn("Geocode was not successful for the following reason: " + status + ' > ' + item);
-					if (status == "xxx") delayTime *= 1.08;
-					queue.push(item);
-					e.value += item + '\n';
+					//console.warn("Geocode was not successful for the following reason: " + status + ' > ' + item);
+					if (status == "OVER_QUERY_LIMIT") {
+						delayTime *= 1.08;	// let's go a little slower
+						queue.push(item);	// and retry the item again later
+					} else {
+						e.value += item + '\n';  // if it was a DIFFERENT error, print it to side dialog box
+					}
 				  }
-			  setTimeout(nextRequestInQueue, delayTime);
+				if (!stop) setTimeout(nextRequestInQueue, delayTime);
 			});
 			
 		}
